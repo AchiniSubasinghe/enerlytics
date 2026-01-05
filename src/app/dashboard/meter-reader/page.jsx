@@ -11,27 +11,23 @@ import {
   TableBody,
   TableCell,
 } from "@/components/ui/table";
-
-const meters = [
-  {
-    id: "MTR-001",
-    utility: "Electricity",
-    customer: "John Doe",
-    address: "Colombo 07",
-    status: "Active",
-    periodStatus: "Pending",
-  },
-  {
-    id: "MTR-002",
-    utility: "Water",
-    customer: "Jane Smith",
-    address: "Kandy",
-    status: "Active",
-    periodStatus: "Completed",
-  },
-];
+import { useEffect, useState } from "react";
 
 export default function MeterReaderDashboard() {
+  const [meters, setMeters] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/meter-reader/meters")
+      .then(res => res.json())
+      .then(data => {
+        setMeters(data);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
+
   return (
     <div className="p-6 space-y-6">
       <h1 className="text-2xl font-bold">Assigned Meters</h1>
@@ -51,24 +47,31 @@ export default function MeterReaderDashboard() {
         <TableBody>
           {meters.map((m) => (
             <TableRow key={m.id}>
-              <TableCell>{m.id}</TableCell>
-              <TableCell>{m.utility}</TableCell>
+              <TableCell>{m.meter_number}</TableCell>
+              <TableCell>{m.utility_type}</TableCell>
               <TableCell>{m.customer}</TableCell>
               <TableCell>{m.address}</TableCell>
               <TableCell>
-                <Badge variant={m.periodStatus === "Pending" ? "destructive" : "success"}>
+                <Badge variant={m.periodStatus === "PENDING" ? "destructive" : "success"}>
                   {m.periodStatus}
                 </Badge>
               </TableCell>
               <TableCell>
                 <Link href={`/dashboard/meter-reader/readings/${m.id}`}>
-                  <Button size="sm" disabled={m.periodStatus === "Completed"}>
+                  <Button size="sm" disabled={m.periodStatus === "COMPLETED"}>
                     Add Reading
                   </Button>
                 </Link>
               </TableCell>
             </TableRow>
           ))}
+          {meters.length === 0 && (
+            <TableRow>
+              <TableCell colSpan={6} className="text-center text-gray-500">
+                No meters assigned
+              </TableCell>
+            </TableRow>
+          )}
         </TableBody>
       </Table>
     </div>
