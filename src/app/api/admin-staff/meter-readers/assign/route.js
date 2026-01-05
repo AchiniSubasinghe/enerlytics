@@ -23,10 +23,14 @@ export async function POST(req) {
                 { status: 409 }
             );
         }
+        
+        // Generate current period (YYYY-MM)
+        const period = new Date().toISOString().slice(0, 7);
+         
 
         await db.query(
-            "INSERT INTO meter_reader_assignments (meter_id, meter_reader_id) VALUES (?, ?)",
-            [meterId, meterReaderId]
+            "INSERT INTO meter_reader_assignments (meter_id, meter_reader_id, period, status) VALUES (?, ?, ?,'PENDING')",
+            [meterId, meterReaderId, period]
         );
 
         return Response.json(

@@ -8,6 +8,7 @@ export async function GET() {
       FROM meters m
       LEFT JOIN meter_reader_assignments mra
         ON m.id = mra.meter_id
+        AND mra.status = 'PENDING'
       WHERE mra.meter_id IS NULL
       ORDER BY m.created_at DESC
     `);
