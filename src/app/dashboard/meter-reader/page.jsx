@@ -56,15 +56,25 @@ export default function MeterReaderDashboard() {
                   {m.periodStatus}
                 </Badge>
               </TableCell>
+
               <TableCell>
-                <Link href={`/dashboard/meter-reader/readings/${m.id}`}>
-                  <Button size="sm" disabled={m.periodStatus === "COMPLETED"}>
-                    Add Reading
-                  </Button>
-                </Link>
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    if (m.periodStatus === "COMPLETED") {
+                      alert("Reading already completed for this meter.");
+                      return;
+                    }
+                    window.location.href = `/dashboard/meter-reader/readings/${m.id}`;
+                  }}
+                  variant={m.periodStatus === "COMPLETED" ? "secondary" : "default"}
+                >
+                  Add Reading
+                </Button>
               </TableCell>
             </TableRow>
           ))}
+          
           {meters.length === 0 && (
             <TableRow>
               <TableCell colSpan={6} className="text-center text-gray-500">
