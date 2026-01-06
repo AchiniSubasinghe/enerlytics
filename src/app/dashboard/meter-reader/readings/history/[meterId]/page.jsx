@@ -8,38 +8,73 @@ import {
   TableBody,
   TableCell,
 } from "@/components/ui/table";
-
-const history = [
-  { date: "2025-01-01", prev: 200, curr: 250, used: 50 },
-  { date: "2024-12-01", prev: 150, curr: 200, used: 50 },
-];
+import { Alert } from "@/components/ui/alert";
+import { useParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export default function ReadingHistoryPage() {
+  const { meterId } = useParams();
+  const [history, setHistory] = useState([]);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`/api/meter-reader/readings/history/${meterId}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.error) {
+          setError(data.error);
+        } else {
+          setHistory(data);
+        }
+        setLoading(false);
+      })
+      .catch(() => {
+        setError("Failed to load history");
+        setLoading(false);
+      });
+  }, [meterId]);
+
+  if (loading) {
+    return <p className="p-6">Loading history...</p>;
+  }
+  
   return (
     <div className="p-6 space-y-4">
       <h1 className="text-2xl font-bold">Reading History</h1>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Date</TableHead>
-            <TableHead>Previous</TableHead>
-            <TableHead>Current</TableHead>
-            <TableHead>Units Used</TableHead>
-          </TableRow>
-        </TableHeader>
+      {error && <Alert variant="destructive">{error}</Alert>}
 
-        <TableBody>
-          {history.map((r, i) => (
-            <TableRow key={i}>
-              <TableCell>{r.date}</TableCell>
-              <TableCell>{r.prev}</TableCell>
-              <TableCell>{r.curr}</TableCell>
-              <TableCell>{r.used}</TableCell>
+      {!error && (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Date</TableHead>
+              <TableHead>Previous</TableHead>
+              <TableHead>Current</TableHead>
+              <TableHead>Units Used</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+
+          <TableBody>
+            {history.map((r, i) => (
+              <TableRow key={i}>
+                <TableCell>{r.reading_date}</TableCell>
+                <TableCell>{r.previous_reading}</TableCell>
+                <TableCell>{r.current_reading}</TableCell>
+                <TableCell>{r.units_used}</TableCell>
+              </TableRow>
+            ))}
+            {history.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={4} className="text-center text-gray-500">
+                  No readings yet
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      )}
     </div>
   );
 }
