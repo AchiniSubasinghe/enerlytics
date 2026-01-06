@@ -1,34 +1,75 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert } from "@/components/ui/alert";
-
-const meter = {
-  meterNo: "MTR-001",
-  utility: "Electricity",
-  previousReading: 250,
-};
+import { useParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 const units = {
-  Electricity: "kWh",
-  Water: "m³",
-  Gas: "units",
+  ELECTRICITY: "kWh",
+  WATER: "m³",
+  GAS: "units",
 };
 
 export default function AddReadingPage() {
+  const { meterId } = useParams();
+  const router = useRouter();
+  const [meter, setMeter] = useState(null);
+  const [previous, setPrevious] = useState(0);
   const [current, setCurrent] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
 
-  function submit() {
-    if (Number(current) < meter.previousReading) {
-      setError("Current reading cannot be less than previous reading.");
+  useEffect(() => {
+    fetch(`/api/meter-reader/meters/${meterId}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.error) {
+          setError(data.error);
+        } else {
+          setMeter(data.meter);
+          setPrevious(data.previousReading); // 0 if none
+        }
+        setLoading(false);
+      })
+      .catch(() => {
+        setError("Failed to load meter");
+        setLoading(false);
+      });
+  }, [meterId]);
+
+  async function submit() {
+    setError("");
+
+    if (Number(current) < previous) {
+      setError("Current reading cannot be less than previous");
       return;
     }
-    setError("");
-    alert("Reading submitted (UI only)");
+
+    const res = await fetch("/api/meter-reader/readings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        meterId,
+        currentReading: Number(current),
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      setError(data.error || "Submission failed");
+      return;
+    }
+
+    router.push("/dashboard/meter-reader");
+  }
+
+  if (loading) {
+    return <p className="p-6">Loading meter...</p>;
   }
 
   return (
@@ -37,21 +78,21 @@ export default function AddReadingPage() {
 
       <div>
         <Label>Meter Number</Label>
-        <Input value={meter.meterNo} disabled />
+        <Input value={meter.meter_number} disabled />
       </div>
 
       <div>
         <Label>Utility Type</Label>
-        <Input value={meter.utility} disabled />
+        <Input value={meter.utility_type} disabled />
       </div>
 
       <div>
-        <Label>Previous Reading ({units[meter.utility]})</Label>
-        <Input value={meter.previousReading} disabled />
+        <Label>Previous Reading ({units[meter.utility_type]})</Label>
+        <Input value={previous} disabled />
       </div>
 
       <div>
-        <Label>Current Reading ({units[meter.utility]})</Label>
+        <Label>Current Reading ({units[meter.utility_type]})</Label>
         <Input
           type="number"
           value={current}
