@@ -54,7 +54,6 @@ export default function DashboardLayout({ children }) {
   // Meter Reader Menu
   const meterReaderMenu = [
     { label: "Dashboard", icon: HomeIcon, href: "/dashboard/meter-reader" },
-    { label: "Add Reading", icon: PlusSquareIcon, href: "/dashboard/meter-reader/add", },
     { label: "Readings History", icon: HistoryIcon, href: "/dashboard/meter-reader/readings/history/[meterId]", },
   ];
 
