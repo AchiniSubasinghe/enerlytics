@@ -1,42 +1,49 @@
 import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 
-export function middleware(request){
-    const url =request.nextUrl.pathname;
-    const token =request.cookies.get("token")?.value;
+const ROLE_ROUTES = {
+    ADMIN: ["/dashboard/admin"],
+    MANAGER: ["/dashboard/manager"],
+    ADMIN_STAFF: ["/dashboard/admin-staff"],
+    CASHIER: ["/dashboard/cashier"],
+    METER_READER: ["/dashboard/meter-reader"],
+};
 
-        if(!token) {
-            return NextResponse.redirect(new URL("/login", request.url));
-        
-        }
+export function middleware(request) {
+    const url = request.nextUrl.pathname;
+    const token = request.cookies.get("token")?.value;
 
-        let decoded;
-        try{
-            decoded =jwt.verify(token, process.env.JWT_SECRET);
-        }catch(error){
-            return NextResponse.redirect(new URL("/login", request.url));
-        }
-
-        const role =decoded.role;
-        if(role==="ADMIN"){
-            return NextResponse.next();
-        }
-        if(role==="MANAGER" && url.startsWith("/manager")){
-            return NextResponse.next();
-        }
-        if(role==="ADMIN_STAFF" && url.startsWith("/admin-staff")){
-            return NextResponse.next();
-        }
-        if(role==="CASHIER" && url.startsWith("/cashier")){
-            return NextResponse.next();
-        }
-        if(role==="METER_READER" && url.startsWith("/meter-reader")){
-            return NextResponse.next();
-        }
+    if (!token) {
         return NextResponse.redirect(new URL("/login", request.url));
+    }
+
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const role = decoded.role;
+
+        if (role === "ADMIN") {
+            return NextResponse.next();
+        }
+
+        for (const [roleKey, routes] of Object.entries(ROLE_ROUTES)) {
+            if (role === roleKey && routes.some((route) => url.startsWith(route))) {
+                return NextResponse.next();
+            }
+        }
+
+        return NextResponse.redirect(new URL("/login", request.url));
+    } catch {
+        return NextResponse.redirect(new URL("/login", request.url));
+    }
 }
 
-export const config ={
-    matcher:["/admin/:path*", "/manager/:path*", "/admin-staff/:path*", "/cashier/:path*", "/meter-reader/:path*"],
+export const config = {
+    matcher: [
+        "/dashboard/admin/:path*",
+        "/dashboard/manager/:path*",
+        "/dashboard/admin-staff/:path*",
+        "/dashboard/cashier/:path*",
+        "/dashboard/meter-reader/:path*",
+    ],
 };
 
