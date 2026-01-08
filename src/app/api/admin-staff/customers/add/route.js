@@ -1,7 +1,14 @@
 import { db } from "@/lib/db";
-import { created, badRequest, error } from "@/lib/api-response";
+import { requireRole } from "@/lib/auth";
+import { ROLES } from "@/lib/rbac";
+import { created, badRequest, error, unauthorized } from "@/lib/api-response";
 
 export async function POST(req) {
+  const user = requireRole(req, [ROLES.ADMIN, ROLES.ADMIN_STAFF]);
+  if (!user) {
+    return unauthorized("Access denied");
+  }
+
   try {
     const { name, email, phone, nic, address, customerType } = await req.json();
 
