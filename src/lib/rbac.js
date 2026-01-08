@@ -6,6 +6,7 @@ export const ROLES = {
     METER_READER: "METER_READER",
     CASHIER: "CASHIER",
     MANAGER: "MANAGER",
+    CUSTOMER: "CUSTOMER",
 };
 
 // Define permissions for each role
@@ -47,6 +48,15 @@ export const PERMISSIONS = {
         payments: ["read"],
         analytics: ["read"],
     },
+
+    // Customers - View own data, pay bills, submit complaints
+    [ROLES.CUSTOMER]: {
+        bills: ["read"],
+        payments: ["create", "read"],
+        complaints: ["create", "read"],
+        meters: ["read"], // Own meters only
+        profile: ["read", "update"],
+    },
 };
 
 // Check if a role has a specific permission
@@ -77,6 +87,7 @@ export function canAccessRoute(role, path) {
     if (path.startsWith("/dashboard/meter-reader") && role === ROLES.METER_READER) return true;
     if (path.startsWith("/dashboard/billing") && role === ROLES.CASHIER) return true;
     if (path.startsWith("/dashboard/manager") && role === ROLES.MANAGER) return true;
+    if (path.startsWith("/dashboard/customer") && role === ROLES.CUSTOMER) return true;
     if (path.startsWith("/dashboard/admin") && role === ROLES.ADMIN) return true;
 
     return false;
