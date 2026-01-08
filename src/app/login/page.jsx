@@ -1,90 +1,100 @@
-  "use client";
-  import { use, useState } from "react";
-  import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-  import { Button } from "@/components/ui/button";
-  import { Input } from "@/components/ui/input";
-  import { motion } from "framer-motion";
+"use client";
 
-  export default function LoginPage() {
-    const [form, setForm] = useState({
-      email: "",
-      password: "",
-    });
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { motion } from "framer-motion";
+import { apiCall } from "@/hooks/use-api";
+import { useRouter } from "next/navigation";
 
-    function handleChange(e) {
-      setForm({ ...form, [e.target.name]: e.target.value });
-    }
+const ROLE_ROUTES = {
+  ADMIN: "/dashboard/admin",
+  MANAGER: "/dashboard/manager",
+  ADMIN_STAFF: "/dashboard/admin-staff",
+  CASHIER: "/dashboard/cashier",
+  METER_READER: "/dashboard/meter-reader",
+};
 
-    async function handleSubmit(e) {
-      e.preventDefault();
-      const response = await fetch("/api/auth/login",{method:"POST",body:JSON.stringify(form)});
-      const data =await response.json();
+export default function LoginPage() {
+  const [form, setForm] = useState({ email: "", password: "" });
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
-      if(response.ok){
-        document.cookie = `token=${data.token}; path=/`;
-
-        if(data.role==="ADMIN"){
-          window.location.href = "/dashboard/admin";
-        }
-        else if(data.role==="MANAGER"){
-          window.location.href = "/dashboard/manager";
-        }
-        else if(data.role==="ADMIN_STAFF"){
-          window.location.href = "/dashboard/admin-staff";
-        }
-        else if(data.role==="CASHIER"){
-          window.location.href = "/dashboard/cashier";
-        }
-        else if(data.role==="METER_READER"){
-          window.location.href = "/dashboard/meter-reader";
-        }else{
-          alert("Unknown role");
-        }
-      }
-      else{
-        alert(data.errori ||"Login failed");
-      }
-    }
-
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="w-full max-w-md"
-        >
-          <Card className="shadow-md rounded-2xl">
-            <CardHeader>
-              <CardTitle className="text-center text-2xl font-semibold">Enerlytics – Login</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <Input
-                  name="email"
-                  type="email"
-                  placeholder="Email"
-                  value={form.email}
-                  onChange={handleChange}
-                  required
-                />
-
-                <Input
-                  name="password"
-                  type="password"
-                  placeholder="Password"
-                  value={form.password}
-                  onChange={handleChange}
-                  required
-                />
-
-                <Button type="submit" className="w-full rounded-xl py-2 text-base">
-                  Login 
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-        </motion.div>
-      </div>
-    );
+  function handleChange(e) {
+    setForm({ ...form, [e.target.name]: e.target.value });
   }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const data = await apiCall("/api/auth/login", {
+        method: "POST",
+        body: JSON.stringify(form),
+      });
+
+      document.cookie = `token=${data.token}; path=/`;
+
+      const route = ROLE_ROUTES[data.role];
+      if (route) {
+        router.push(route);
+      } else {
+        alert("Unknown role");
+      }
+    } catch (err) {
+      alert(err.message || "Login failed");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="w-full max-w-md"
+      >
+        <Card className="shadow-md rounded-2xl">
+          <CardHeader>
+            <CardTitle className="text-center text-2xl font-semibold">
+              Enerlytics – Login
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <Input
+                name="email"
+                type="email"
+                placeholder="Email"
+                value={form.email}
+                onChange={handleChange}
+                required
+              />
+
+              <Input
+                name="password"
+                type="password"
+                placeholder="Password"
+                value={form.password}
+                onChange={handleChange}
+                required
+              />
+
+              <Button
+                type="submit"
+                className="w-full rounded-xl py-2 text-base"
+                disabled={loading}
+              >
+                {loading ? "Logging in..." : "Login"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </motion.div>
+    </div>
+  );
+}
