@@ -25,6 +25,7 @@ export function middleware(request) {
             [ROLES.METER_READER]: "/dashboard/meter-reader",
             [ROLES.CASHIER]: "/dashboard/billing",
             [ROLES.MANAGER]: "/dashboard/manager",
+            [ROLES.CUSTOMER]: "/dashboard/customer",
         };
 
         const dashboard = dashboardMap[user.role];
@@ -45,6 +46,7 @@ export const config = {
         "/dashboard/admin-staff/:path*",
         "/dashboard/billing/:path*",
         "/dashboard/meter-reader/:path*",
+        "/dashboard/customer/:path*",
     ],
 };
 

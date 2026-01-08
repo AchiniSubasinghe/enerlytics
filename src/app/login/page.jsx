@@ -12,8 +12,9 @@ const ROLE_ROUTES = {
   ADMIN: "/dashboard/admin",
   MANAGER: "/dashboard/manager",
   ADMIN_STAFF: "/dashboard/admin-staff",
-  CASHIER: "/dashboard/cashier",
+  CASHIER: "/dashboard/billing",
   METER_READER: "/dashboard/meter-reader",
+  CUSTOMER: "/dashboard/customer",
 };
 
 export default function LoginPage() {
