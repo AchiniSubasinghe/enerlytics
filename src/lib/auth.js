@@ -42,3 +42,4 @@ export function requirePermission(req, resource, action) {
    }
 
    return null;
+}
