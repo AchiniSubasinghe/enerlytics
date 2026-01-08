@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import { hasPermission } from "./rbac";
 
 export function getUserFromRequest(req) {
    const cookie = req.headers.get("cookie");
@@ -22,6 +23,7 @@ export function generateToken(user) {
    );
 }
 
+// Check if user has required role
 export function requireRole(req, allowedRoles) {
    const user = getUserFromRequest(req);
    if (!user || !allowedRoles.includes(user.role)) {
@@ -29,3 +31,14 @@ export function requireRole(req, allowedRoles) {
    }
    return user;
 }
+
+// Check if user has permission for a specific action
+export function requirePermission(req, resource, action) {
+   const user = getUserFromRequest(req);
+   if (!user) return null;
+
+   if (hasPermission(user.role, resource, action)) {
+      return user;
+   }
+
+   return null;
