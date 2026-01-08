@@ -1,14 +1,12 @@
 import { db } from "@/lib/db";
+import { created, badRequest, error } from "@/lib/api-response";
 
 export async function POST(req) {
   try {
     const { name, email, phone, nic, address, customerType } = await req.json();
 
     if (!name || !email) {
-      return Response.json(
-        { error: "Name and email are required" },
-        { status: 400 }
-      );
+      return badRequest("Name and email are required");
     }
 
     await db.query(
@@ -16,12 +14,8 @@ export async function POST(req) {
       [name, email, phone || null, nic || null, address || null, customerType || "HOUSEHOLD"]
     );
 
-    return Response.json({ message: "Customer added" }, { status: 201 });
-  } catch (error) {
-    console.error(error);
-    return Response.json(
-      { error: "Failed to add customer" },
-      { status: 500 }
-    );
+    return created({ message: "Customer added successfully" });
+  } catch (err) {
+    return error(err.message);
   }
 }

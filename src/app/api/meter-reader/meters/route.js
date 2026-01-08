@@ -1,26 +1,18 @@
 import { db } from "@/lib/db";
-import { NextResponse } from "next/server";
 import { getUserFromRequest } from "@/lib/auth";
+import { success, unauthorized, forbidden, error } from "@/lib/api-response";
 
 export async function GET(req) {
   try {
     const user = getUserFromRequest(req);
 
     if (!user) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return unauthorized();
     }
 
     if (user.role !== "METER_READER") {
-      return NextResponse.json(
-        { error: "Forbidden" }, 
-        { status: 403 }
-      );
+      return forbidden();
     }
-
-    const meterReaderId = user.id; // FROM JWT
 
     const [rows] = await db.query(
       `
@@ -38,15 +30,11 @@ export async function GET(req) {
       JOIN customers c ON c.id = mca.customer_id
       WHERE mra.meter_reader_id = ?
       `,
-      [meterReaderId]
+      [user.id]
     );
 
-    return NextResponse.json(rows);
+    return success(rows);
   } catch (err) {
-    console.error("Meter reader meters error:", err);
-    return NextResponse.json(
-      { error: "Failed to load meters" },
-      { status: 500 }
-    );
+    return error(err.message);
   }
 }

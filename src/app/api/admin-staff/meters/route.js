@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { success, error } from "@/lib/api-response";
 
 export async function GET() {
   try {
@@ -18,12 +19,8 @@ export async function GET() {
       ORDER BY m.created_at DESC
     `);
 
-    return Response.json(rows);
-  } catch (error) {
-    console.error(error);
-    return Response.json(
-      { error: "Failed to fetch meters" },
-      { status: 500 }
-    );
+    return success(rows);
+  } catch (err) {
+    return error(err.message);
   }
 }

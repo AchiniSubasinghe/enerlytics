@@ -1,25 +1,19 @@
 import { db } from "@/lib/db";
-import bcrypt from 'bcryptjs';
+import bcrypt from "bcryptjs";
+import { created, badRequest, conflict, error } from "@/lib/api-response";
 
 export async function POST(request) {
     try {
-        const { fullname, email, password, phone, nic, role, } = await request.json();
+        const { fullname, email, password, phone, nic, role } = await request.json();
+
         if (!fullname || !email || !password || !role) {
-            return Response.json(
-                { error: "Fullname, email, password, and role are required" },
-                { status: 400 }
-            );
+            return badRequest("Fullname, email, password, and role are required");
         }
 
-        const [existing] = await db.query(
-            "SELECT * FROM users WHERE email = ?", [email]
-        );
+        const [existing] = await db.query("SELECT id FROM users WHERE email = ?", [email]);
 
         if (existing.length > 0) {
-            return Response.json(
-                { error: "Email is already exists" },
-                { status: 409 }
-            );
+            return conflict("Email already exists");
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -29,9 +23,8 @@ export async function POST(request) {
             [fullname, email, hashedPassword, role, phone || null, nic || null]
         );
 
-        return Response.json({ message: "User added Successfully" }, { status: 201 });
-    } catch (error) {
-        return Response.json({ error: error.message }, { status: 500 });
+        return created({ message: "User added successfully" });
+    } catch (err) {
+        return error(err.message);
     }
-
 }

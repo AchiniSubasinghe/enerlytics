@@ -1,24 +1,23 @@
 import { db } from "@/lib/db";
+import { created, badRequest, error } from "@/lib/api-response";
 
 export async function POST(req) {
     try {
         const { meterNumber, status, utilityType } = await req.json();
 
         if (!meterNumber || !utilityType) {
-            return Response.json(
-                { error: "Meter number and utility type are required" },
-                { status: 400 }
-            );
+            return badRequest("Meter number and utility type are required");
         }
 
-        let unit;
-        if (utilityType === "ELECTRICITY") unit = "kWh";
-        else if (utilityType === "WATER" || utilityType === "GAS") unit = "m³";
-        else {
-            return Response.json(
-                { error: "Invalid utility type" },
-                { status: 400 }
-            );
+        const unitMap = {
+            ELECTRICITY: "kWh",
+            WATER: "m³",
+            GAS: "m³",
+        };
+
+        const unit = unitMap[utilityType];
+        if (!unit) {
+            return badRequest("Invalid utility type");
         }
 
         await db.query(
@@ -26,12 +25,8 @@ export async function POST(req) {
             [meterNumber, status || "ACTIVE", utilityType, unit]
         );
 
-        return Response.json({ message: "Meter added successfully" }, { status: 201 });
+        return created({ message: "Meter added successfully" });
     } catch (err) {
-        console.error(err);
-        return Response.json(
-            { error: "Failed to add meter" },
-            { status: 500 }
-        );
+        return error(err.message);
     }
 }

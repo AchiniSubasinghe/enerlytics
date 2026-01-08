@@ -1,14 +1,13 @@
-// Get meter readings
 import { db } from "@/lib/db";
-import { NextResponse } from "next/server";
 import { getUserFromRequest } from "@/lib/auth";
+import { success, unauthorized, error } from "@/lib/api-response";
 
 export async function GET(req) {
    try {
       const user = getUserFromRequest(req);
 
       if (!user || user.role !== "METER_READER") {
-         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+         return unauthorized();
       }
 
       const [rows] = await db.query(
@@ -30,12 +29,8 @@ export async function GET(req) {
          [user.id]
       );
 
-      return NextResponse.json(rows);
+      return success(rows);
    } catch (err) {
-      console.error("Meter reader readings error:", err);
-      return NextResponse.json(
-         { error: "Server error" },
-         { status: 500 }
-      );
+      return error(err.message);
    }
 }

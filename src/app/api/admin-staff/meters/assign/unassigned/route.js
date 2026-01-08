@@ -1,25 +1,18 @@
-// this is for get unassigned meters for customers when assigning
 import { db } from "@/lib/db";
+import { success, error } from "@/lib/api-response";
 
 export async function GET() {
-  const connection = await db.getConnection();
-
   try {
-    const [rows] = await connection.query(`
+    const [rows] = await db.query(`
       SELECT m.id, m.meter_number
       FROM meters m
       LEFT JOIN meter_customer_assignments mca
-        ON m.id = mca.meter_id
-        AND mca.unassigned_at IS NULL
+        ON m.id = mca.meter_id AND mca.unassigned_at IS NULL
       WHERE mca.meter_id IS NULL
     `);
-
-    return Response.json(rows);
+    return success(rows);
   } catch (err) {
-    console.error(err);
-    return Response.json({ error: "Failed to load meters" }, { status: 500 });
-  } finally {
-    connection.release();
+    return error(err.message);
   }
 }
 
