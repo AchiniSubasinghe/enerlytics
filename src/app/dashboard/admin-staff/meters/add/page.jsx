@@ -3,34 +3,47 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { apiCall } from "@/hooks/use-api";
 
+const UNIT_MAP = {
+  ELECTRICITY: "kWh",
+  WATER: "m³",
+  GAS: "m³",
+};
 
 export default function AddMeterPage() {
-
   const router = useRouter();
   const [meterNumber, setMeterNumber] = useState("");
   const [status, setStatus] = useState("ACTIVE");
   const [utilityType, setUtilityType] = useState("");
+  const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e) {
     e.preventDefault();
+    setLoading(true);
 
-    const res = await fetch("/api/admin-staff/meters/add", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ meterNumber, status, utilityType }),
-    });
+    try {
+      await apiCall("/api/admin-staff/meters/add", {
+        method: "POST",
+        body: JSON.stringify({ meterNumber, status, utilityType }),
+      });
 
-    if (!res.ok) {
-      alert("Failed to add meter");
-      return;
+      alert("Meter added successfully");
+      router.push("/dashboard/admin-staff/meters");
+    } catch (err) {
+      alert(err.message || "Failed to add meter");
+    } finally {
+      setLoading(false);
     }
-
-    alert("Meter added");
-    router.push("/dashboard/admin-staff/meters");
   }
 
   return (
@@ -48,7 +61,7 @@ export default function AddMeterPage() {
       </div>
 
       <div className="space-y-2">
-        <Label>status</Label>
+        <Label>Status</Label>
         <Select value={status} onValueChange={setStatus}>
           <SelectTrigger>
             <SelectValue placeholder="Select status" />
@@ -66,24 +79,21 @@ export default function AddMeterPage() {
         <Select value={utilityType} onValueChange={setUtilityType}>
           <SelectTrigger>
             <SelectValue placeholder="Select utility type" />
-            {utilityType && (
-              <p className="text-sm text-muted-foreground ">
-                Unit: {utilityType === "ELECTRICITY" ? "kWh" : "m³"}
-              </p>
-            )}
           </SelectTrigger>
-          <SelectContent >
-            <SelectItem value="ELECTRICITY">Electricity</SelectItem>
-            <SelectItem value="WATER">Water</SelectItem>
-            <SelectItem value="GAS">Gas</SelectItem>
+          <SelectContent>
+            <SelectItem value="ELECTRICITY">Electricity (kWh)</SelectItem>
+            <SelectItem value="WATER">Water (m³)</SelectItem>
+            <SelectItem value="GAS">Gas (m³)</SelectItem>
           </SelectContent>
         </Select>
-
-
+        {utilityType && (
+          <p className="text-sm text-gray-500">Unit: {UNIT_MAP[utilityType]}</p>
+        )}
       </div>
 
-
-      <Button type="submit" className="w-full">Save Meter</Button>
-    </form >
+      <Button type="submit" className="w-full" disabled={loading}>
+        {loading ? "Saving..." : "Save Meter"}
+      </Button>
+    </form>
   );
 }
