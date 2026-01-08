@@ -18,6 +18,8 @@ export default function AddCustomerPage() {
     address: "",
     customerType: "HOUSEHOLD",
   });
+  const [createLogin, setCreateLogin] = useState(false);
+  const [generatedPassword, setGeneratedPassword] = useState("");
 
   function handleChange(e) {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -29,7 +31,7 @@ export default function AddCustomerPage() {
     const res = await fetch("/api/admin-staff/customers/add", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
+      body: JSON.stringify({ ...form, createLogin }),
     });
 
     if (!res.ok) {
@@ -40,8 +42,13 @@ export default function AddCustomerPage() {
     }
 
     const data = await res.json();
-    alert("Customer added successfully");
-    router.push("/dashboard/admin-staff/customers");
+
+    if (data.password) {
+      setGeneratedPassword(data.password);
+    } else {
+      alert("Customer added successfully");
+      router.push("/dashboard/admin-staff/customers");
+    }
   }
 
   return (
@@ -87,7 +94,39 @@ export default function AddCustomerPage() {
         </Select>
       </div>
 
-      <Button className="w-full">Save Customer</Button>
+      <div className="flex items-center space-x-2">
+        <input
+          type="checkbox"
+          id="createLogin"
+          checked={createLogin}
+          onChange={(e) => setCreateLogin(e.target.checked)}
+          className="w-4 h-4"
+        />
+        <Label htmlFor="createLogin" className="cursor-pointer">
+          Create Login Account (generates temporary password)
+        </Label>
+      </div>
+
+      {generatedPassword ? (
+        <div className="bg-green-50 border border-green-200 rounded p-4 space-y-3">
+          <h2 className="text-lg font-semibold text-green-800">Customer Account Created!</h2>
+          <p className="text-sm text-gray-600">Customer and login account created successfully.</p>
+          <div className="bg-white border border-green-300 rounded p-3">
+            <Label className="text-sm font-medium">Temporary Password (save this now):</Label>
+            <div className="mt-2 font-mono text-lg font-bold text-green-700 select-all">
+              {generatedPassword}
+            </div>
+          </div>
+          <p className="text-sm text-amber-600 font-medium">
+            ⚠️ This password will only be shown once. Please save it and share with the customer.
+          </p>
+          <Button type="button" onClick={() => router.push("/dashboard/admin-staff/customers")} className="w-full">
+            Go to Customers List
+          </Button>
+        </div>
+      ) : (
+        <Button className="w-full">Save Customer</Button>
+      )}
     </form>
   );
 }
