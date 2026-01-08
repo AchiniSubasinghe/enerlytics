@@ -1,13 +1,6 @@
 import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
-
-const ROLE_ROUTES = {
-    ADMIN: ["/dashboard/admin"],
-    MANAGER: ["/dashboard/manager"],
-    ADMIN_STAFF: ["/dashboard/admin-staff"],
-    CASHIER: ["/dashboard/cashier"],
-    METER_READER: ["/dashboard/meter-reader"],
-};
+import { canAccessRoute, ROLES } from "./src/lib/rbac";
 
 export function middleware(request) {
     const url = request.nextUrl.pathname;
@@ -18,17 +11,25 @@ export function middleware(request) {
     }
 
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const role = decoded.role;
+        const user = jwt.verify(token, process.env.JWT_SECRET);
 
-        if (role === "ADMIN") {
+        // Check if user can access the route
+        if (canAccessRoute(user.role, url)) {
             return NextResponse.next();
         }
 
-        for (const [roleKey, routes] of Object.entries(ROLE_ROUTES)) {
-            if (role === roleKey && routes.some((route) => url.startsWith(route))) {
-                return NextResponse.next();
-            }
+        // Redirect to appropriate dashboard based on role
+        const dashboardMap = {
+            [ROLES.ADMIN]: "/dashboard/admin",
+            [ROLES.ADMIN_STAFF]: "/dashboard/admin-staff",
+            [ROLES.METER_READER]: "/dashboard/meter-reader",
+            [ROLES.CASHIER]: "/dashboard/billing",
+            [ROLES.MANAGER]: "/dashboard/manager",
+        };
+
+        const dashboard = dashboardMap[user.role];
+        if (dashboard) {
+            return NextResponse.redirect(new URL(dashboard, request.url));
         }
 
         return NextResponse.redirect(new URL("/login", request.url));
@@ -42,7 +43,7 @@ export const config = {
         "/dashboard/admin/:path*",
         "/dashboard/manager/:path*",
         "/dashboard/admin-staff/:path*",
-        "/dashboard/cashier/:path*",
+        "/dashboard/billing/:path*",
         "/dashboard/meter-reader/:path*",
     ],
 };
