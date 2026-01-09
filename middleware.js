@@ -47,6 +47,7 @@ export const config = {
         "/dashboard/billing/:path*",
         "/dashboard/meter-reader/:path*",
         "/dashboard/customer/:path*",
+        "/api/billing/:path*",
     ],
 };
 
