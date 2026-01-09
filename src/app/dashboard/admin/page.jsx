@@ -10,7 +10,7 @@ export default function AdminDashboard() {
 
   const userList = users || [];
 
-  const stats = {
+  const stats = { 
     totalUsers: userList.length,
     totalPayments: 842000,
     pendingPayments: 47,

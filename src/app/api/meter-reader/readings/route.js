@@ -1,6 +1,12 @@
 import { db } from "@/lib/db";
 import { getUserFromRequest } from "@/lib/auth";
-import { success, unauthorized, badRequest, forbidden, error } from "@/lib/api-response";
+import {
+  success,
+  unauthorized,
+  badRequest,
+  forbidden,
+  error,
+} from "@/lib/api-response";
 
 export async function POST(req) {
   try {
@@ -43,23 +49,31 @@ export async function POST(req) {
       [meterId, previous, currentReading, unitsUsed]
     );
 
-     const [[customerId]]=await db.query(
+    const [[row]] = await db.query(
       "SELECT customer_id from meter_customer_assignments where meter_id = ?",
       [meterId]
     );
 
+    const customerId = row?.customer_id ?? null;
+
     // if(customerId)
 
-      var amount = unitsUsed * 155;
-      
-      // {
-         await db.query(
-      "INSERT INTO bills (meter_id, previous_reading, current_reading, units_used, bill_amount, status,  createdAt) VALUES (?, ?, ?, ?, ?, ?, CURDATE())",
-      [meterId, previous, currentReading, unitsUsed, amount, 'NOT PAID']
-    );
-      // }
+    var amount = unitsUsed * 155;
 
-    
+    // {
+    await db.query(
+      "INSERT INTO bills (meter_id, customer_id, previous_reading, current_reading, units_used, bill_amount, status,  createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, CURDATE())",
+      [
+        meterId,
+        customerId,
+        previous,
+        currentReading,
+        unitsUsed,
+        amount,
+        "NOT PAID",
+      ]
+    );
+    // }
 
     await db.query(
       "UPDATE meter_reader_assignments SET status = 'COMPLETED' WHERE meter_reader_id = ? AND meter_id = ?",
@@ -71,4 +85,3 @@ export async function POST(req) {
     return error(err.message);
   }
 }
-

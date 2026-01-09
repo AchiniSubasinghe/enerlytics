@@ -45,7 +45,7 @@ export default function MeterReaderDashboard() {
           </TableHeader>
 
           <TableBody>
-            {meters.map((m) => (
+            {meters?.map((m) => (
               <TableRow key={m.id}>
                 <TableCell>{m.meter_number}</TableCell>
                 <TableCell>{m.utility_type}</TableCell>
@@ -70,7 +70,7 @@ export default function MeterReaderDashboard() {
               </TableRow>
             ))}
 
-            {meters.length === 0 && (
+            {meters?.length === 0 && (
               <TableRow>
                 <TableCell colSpan={6} className="text-center text-gray-500">
                   No meters assigned
