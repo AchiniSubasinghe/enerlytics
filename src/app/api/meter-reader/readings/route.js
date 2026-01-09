@@ -43,6 +43,24 @@ export async function POST(req) {
       [meterId, previous, currentReading, unitsUsed]
     );
 
+     const [[customerId]]=await db.query(
+      "SELECT customer_id from meter_customer_assignments where meter_id = ?",
+      [meterId]
+    );
+
+    // if(customerId)
+
+      var amount = unitsUsed * 155;
+      
+      // {
+         await db.query(
+      "INSERT INTO bills (meter_id, previous_reading, current_reading, units_used, bill_amount, status,  createdAt) VALUES (?, ?, ?, ?, ?, ?, CURDATE())",
+      [meterId, previous, currentReading, unitsUsed, amount, 'NOT PAID']
+    );
+      // }
+
+    
+
     await db.query(
       "UPDATE meter_reader_assignments SET status = 'COMPLETED' WHERE meter_reader_id = ? AND meter_id = ?",
       [user.id, meterId]

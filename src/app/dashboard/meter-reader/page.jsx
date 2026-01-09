@@ -18,10 +18,10 @@ export default function MeterReaderDashboard() {
   const router = useRouter();
 
   function handleAddReading(meter) {
-    if (meter.periodStatus === "COMPLETED") {
-      alert("Reading already completed for this meter.");
-      return;
-    }
+    // if (meter.periodStatus === "COMPLETED") {
+    //   alert("Reading already completed for this meter.");
+    //   return;
+    // }
     router.push(`/dashboard/meter-reader/readings/${meter.id}`);
   }
 
