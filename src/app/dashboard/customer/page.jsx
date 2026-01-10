@@ -65,6 +65,14 @@ export default function CustomerDashboard() {
                             <>
                                 <p className="text-3xl font-bold">{complaintsList.length}</p>
                                 <p className="text-sm text-gray-500 mt-2">Total complaints</p>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="mt-3"
+                                    onClick={() => window.location.href = "/dashboard/customer/complaints"}
+                                >
+                                    View Complaints
+                                </Button>
                             </>
                         )}
                     </CardContent>

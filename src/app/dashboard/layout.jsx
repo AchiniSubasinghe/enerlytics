@@ -77,12 +77,21 @@ export default function DashboardLayout({ children }) {
     { label: "top-consumers", icon: TrophyIcon, href: "/dashboard/manager/top-consumers" },
   ];
 
+  // Customer Menu
+  const customerMenu = [
+    { label: "Dashboard", icon: HomeIcon, href: "/dashboard/customer" },
+    { label: "My Bills", icon: FileTextIcon, href: "/dashboard/customer/bills" },
+    { label: "My Meters", icon: ZapIcon, href: "/dashboard/customer/meters" },
+    { label: "Complaints", icon: AlertCircleIcon, href: "/dashboard/customer/complaints" },
+  ];
+
   function getMenu() {
     if (pathname.startsWith("/dashboard/admin-staff")) return adminStaffMenu;
     if (pathname.startsWith("/dashboard/admin")) return adminMenu;
     if (pathname.startsWith("/dashboard/meter-reader")) return meterReaderMenu;
     if (pathname.startsWith("/dashboard/billing")) return billingMenu;
     if (pathname.startsWith("/dashboard/manager")) return managerMenu;
+    if (pathname.startsWith("/dashboard/customer")) return customerMenu;
     return [];
   }
 
