@@ -22,9 +22,13 @@ export async function GET(req) {
 
         const customerId = customers[0].id;
 
-        // Get meters for this customer
+        // Get meters for this customer through meter_customer_assignments
         const [meters] = await db.query(
-            "SELECT * FROM meters WHERE customer_id = ?",
+            `SELECT m.*, mca.assigned_at 
+             FROM meters m
+             JOIN meter_customer_assignments mca ON m.id = mca.meter_id
+             WHERE mca.customer_id = ? AND mca.unassigned_at IS NULL
+             ORDER BY mca.assigned_at DESC`,
             [customerId]
         );
 

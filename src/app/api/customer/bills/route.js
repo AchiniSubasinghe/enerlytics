@@ -22,12 +22,14 @@ export async function GET(req) {
 
         const customerId = customers[0].id;
 
-        // Get bills for this customer
+        // Get bills for this customer through meter_customer_assignments
         const [bills] = await db.query(
-            `SELECT b.* FROM bills b
+            `SELECT b.*, m.meter_number, m.utility_type 
+             FROM bills b
              JOIN meters m ON b.meter_id = m.id
-             WHERE m.customer_id = ?
-             ORDER BY b.billing_date DESC`,
+             JOIN meter_customer_assignments mca ON m.id = mca.meter_id
+             WHERE mca.customer_id = ? AND mca.unassigned_at IS NULL
+             ORDER BY b.createdAt DESC`,
             [customerId]
         );
 
