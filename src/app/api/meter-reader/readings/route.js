@@ -50,7 +50,7 @@ export async function POST(req) {
     );
 
     // Get customer and meter details
-    const [[assignment]] = await db.query(
+    const [[customerAssignment]] = await db.query(
       `SELECT mca.customer_id, c.customer_type, m.utility_type 
        FROM meter_customer_assignments mca
        JOIN customers c ON mca.customer_id = c.id
@@ -59,9 +59,9 @@ export async function POST(req) {
       [meterId]
     );
 
-    const customerId = assignment?.customer_id ?? null;
-    const customerType = assignment?.customer_type ?? 'HOUSEHOLD';
-    const utilityType = assignment?.utility_type;
+    const customerId = customerAssignment?.customer_id ?? null;
+    const customerType = customerAssignment?.customer_type ?? 'HOUSEHOLD';
+    const utilityType = customerAssignment?.utility_type;
 
     let billAmount = 0;
 
