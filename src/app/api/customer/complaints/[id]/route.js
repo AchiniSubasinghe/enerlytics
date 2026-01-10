@@ -1,10 +1,34 @@
 import { db } from "@/lib/db";
-import { success, notFound, error } from "@/lib/api-response";
+import { requireRole } from "@/lib/auth";
+import { ROLES } from "@/lib/rbac";
+import { success, notFound, error, unauthorized } from "@/lib/api-response";
 
 export async function GET(req, context) {
+    const user = requireRole(req, [ROLES.CUSTOMER]);
+    if (!user) {
+        return unauthorized("Access denied");
+    }
+
     try {
         const { id } = await context.params;
-        const [rows] = await db.query("SELECT * FROM complaints WHERE id = ?", [id]);
+
+        // Get customer ID from user
+        const [customers] = await db.query(
+            "SELECT id FROM customers WHERE email = ?",
+            [user.email]
+        );
+
+        if (customers.length === 0) {
+            return notFound("Customer not found");
+        }
+
+        const customerId = customers[0].id;
+
+        // Get complaint only if it belongs to this customer
+        const [rows] = await db.query(
+            "SELECT * FROM complaints WHERE id = ? AND customer_id = ?",
+            [id, customerId]
+        );
 
         if (rows.length === 0) {
             return notFound("Complaint not found");
