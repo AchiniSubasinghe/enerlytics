@@ -49,6 +49,7 @@ export default function DashboardLayout({ children }) {
     { label: "Meters", icon: ZapIcon, href: "/dashboard/admin-staff/meters" },
     { label: "Meter Readers", icon: ClipboardListIcon, href: "/dashboard/admin-staff/meter-readers" },
     { label: "Tariffs", icon: DollarSignIcon, href: "/dashboard/admin-staff/tariffs" },
+    { label: "Complaints", icon: AlertCircleIcon, href: "/dashboard/customer/complaints" },
   ];
 
   // Meter Reader Menu
