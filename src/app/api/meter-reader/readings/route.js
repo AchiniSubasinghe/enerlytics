@@ -49,31 +49,100 @@ export async function POST(req) {
       [meterId, previous, currentReading, unitsUsed]
     );
 
-    const [[row]] = await db.query(
-      "SELECT customer_id from meter_customer_assignments where meter_id = ?",
+    // Get customer and meter details
+    const [[assignment]] = await db.query(
+      `SELECT mca.customer_id, c.customer_type, m.utility_type 
+       FROM meter_customer_assignments mca
+       JOIN customers c ON mca.customer_id = c.id
+       JOIN meters m ON mca.meter_id = m.id
+       WHERE mca.meter_id = ? AND mca.unassigned_at IS NULL`,
       [meterId]
     );
 
-    const customerId = row?.customer_id ?? null;
+    const customerId = assignment?.customer_id ?? null;
+    const customerType = assignment?.customer_type ?? 'HOUSEHOLD';
+    const utilityType = assignment?.utility_type;
 
-    // if(customerId)
+    let billAmount = 0;
 
-    var amount = unitsUsed * 155;
+    if (customerId && utilityType) {
+      // Find active tariff for this utility type
+      const [[tariff]] = await db.query(
+        "SELECT id, fixed_charge FROM tariffs WHERE utility_type = ? AND status = 'ACTIVE' LIMIT 1",
+        [utilityType]
+      );
 
-    // {
+      if (tariff) {
+        // Get tariff slabs for tiered pricing
+        const [slabs] = await db.query(
+          "SELECT min_units, max_units, rate_per_unit, fixed_charge FROM tariff_slabs WHERE tariff_id = ? ORDER BY min_units ASC",
+          [tariff.id]
+        );
+
+        if (slabs.length > 0) {
+          // Calculate bill using tiered pricing
+          let remainingUnits = unitsUsed;
+
+          for (const slab of slabs) {
+            if (remainingUnits <= 0) break;
+
+            const slabMin = parseFloat(slab.min_units);
+            const slabMax = slab.max_units ? parseFloat(slab.max_units) : Infinity;
+            const slabRange = slabMax - slabMin;
+
+            // Calculate units in this tier
+            const unitsInTier = Math.min(remainingUnits, slabRange);
+
+            // Add cost for this tier
+            billAmount += unitsInTier * parseFloat(slab.rate_per_unit);
+
+            // Add slab fixed charge if any
+            if (slab.fixed_charge) {
+              billAmount += parseFloat(slab.fixed_charge);
+            }
+
+            remainingUnits -= unitsInTier;
+          }
+
+          // Add tariff fixed charge
+          if (tariff.fixed_charge) {
+            billAmount += parseFloat(tariff.fixed_charge);
+          }
+        } else {
+          // No slabs, use simple calculation with tariff rate
+          const [[tariffData]] = await db.query(
+            "SELECT rate_per_unit, fixed_charge FROM tariffs WHERE id = ?",
+            [tariff.id]
+          );
+
+          if (tariffData) {
+            billAmount = (unitsUsed * parseFloat(tariffData.rate_per_unit)) + parseFloat(tariffData.fixed_charge || 0);
+          }
+        }
+      } else {
+        // Fallback: use default rate if no tariff found
+        billAmount = unitsUsed * 155;
+      }
+    } else {
+      // Fallback: use default rate if no customer/utility
+      billAmount = unitsUsed * 155;
+    }
+
+    // Round to 2 decimal places
+    billAmount = Math.round(billAmount * 100) / 100;
+
     await db.query(
-      "INSERT INTO bills (meter_id, customer_id, previous_reading, current_reading, units_used, bill_amount, status,  createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, CURDATE())",
+      "INSERT INTO bills (meter_id, customer_id, previous_reading, current_reading, units_used, bill_amount, status, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, CURDATE())",
       [
         meterId,
         customerId,
         previous,
         currentReading,
         unitsUsed,
-        amount,
+        billAmount,
         "NOT PAID",
       ]
     );
-    // }
 
     await db.query(
       "UPDATE meter_reader_assignments SET status = 'COMPLETED' WHERE meter_reader_id = ? AND meter_id = ?",
